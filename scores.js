@@ -1,8 +1,12 @@
 var request = require("request");
-var token = require("./config.json").token;
+var config = require("./config.json");
+var token = config.token;
 
 var api_url = "https://erikberg.com";
-var headers = { 'Authorization': 'Bearer ' + token };
+var headers = {
+	'Authorization': 'Bearer ' + token,
+	'User-Agent': config.ua
+};
 
 var today = new Date();
 var offset = today.getDay() - 1;
