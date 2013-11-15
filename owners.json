@@ -1,0 +1,56 @@
+[{
+  "name": "cl",
+  "teams": [
+    "utah-jazz",
+    "houston-rockets",
+    "miami-heat",
+    "philadelphia-76ers",
+    "charlotte-bobcats"
+  ]
+}, {
+  "name": "dd",
+  "teams": [
+    "brooklyn-nets",
+    "orlando-magic",
+    "phoenix-suns",
+    "denver-nuggets",
+    "san-antonio-spurs"
+  ]
+}, {
+  "name": "kz",
+  "teams": [
+    "indiana-pacers",
+    "milwaukee-bucks",
+    "new-orleans-pelicans",
+    "portland-trail-blazers",
+    "golden-state-warriors"
+  ]
+}, {
+  "name": "mt",
+  "teams": [
+    "boston-celtics",
+    "washington-wizards",
+    "memphis-grizzlies",
+    "detroit-pistons",
+    "los-angeles-clippers"
+  ]
+}, {
+  "name": "tt",
+  "teams": [
+    "atlanta-hawks",
+    "los-angeles-lakers",
+    "new-york-knicks",
+    "oklahoma-city-thunder",
+    "sacramento-kings"
+  ]
+}, {
+  "name": "yh",
+  "teams": [
+    "chicago-bulls",
+    "cleveland-cavaliers",
+    "minnesota-timberwolves",
+    "dallas-mavericks",
+    "toronto-raptors"
+  ]
+}]
+

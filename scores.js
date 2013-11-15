@@ -2,6 +2,7 @@ var request = require("request");
 
 var config = require("./config.json");
 var teams = require("./teams.json");
+var owners = require("./owners.json");
 
 var token = config.token;
 var apiGraceMs = 10 * 1000;
@@ -75,8 +76,6 @@ function getResults(success) {
 
 	teams.forEach(function(team) {
 		getResultsForTeam(team, function(result) {
-			console.log(team.team_id, result);
-
 			results[team.team_id] = result;
 			counter--;
 
@@ -103,4 +102,28 @@ function getResultsForTeam(team, success, error) {
 	});
 }
 
-getResults(console.log);
+function getOwnerResults(teamResults) {
+	results = {};
+
+	owners.forEach(function(owner) {
+		var ownerTeamResults = owner.teams.reduce(function(result, team) {
+			var teamResult = teamResults[team];
+			result.won += teamResult.won;
+			result.lost += teamResult.lost;
+
+			return result;
+		}, { won: 0, lost: 0 });
+
+		results[owner.name] = {
+			results: ownerTeamResults,
+			wincentage: ownerTeamResults.won / (ownerTeamResults.won + ownerTeamResults.lost)
+		};
+	});
+
+	return results;
+}
+
+getResults(function(results) {
+	console.log(results);
+	console.log(getOwnerResults(results));
+});
