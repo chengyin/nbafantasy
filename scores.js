@@ -1,12 +1,17 @@
 var request = require("request");
-var config = require("./config.json");
-var token = config.token;
 
-var api_url = "https://erikberg.com";
+var config = require("./config.json");
+var teams = require("./teams.json");
+
+var token = config.token;
+var apiGraceMs = 10 * 1000;
+
 var headers = {
 	'Authorization': 'Bearer ' + token,
 	'User-Agent': config.ua
 };
+
+var apiUrl = "https://erikberg.com";
 
 var today = new Date();
 var offset = today.getDay() - 1;
@@ -17,81 +22,85 @@ if (offset < 0) {
 
 var oneDayMs = 1000 * 60 * 60 * 24;
 var monday = new Date(today.getTime() - offset * oneDayMs);
-var date = new Date(monday.getTime());
 
-var teams = {};
+function api(url, success, error) {
+	var requestUrl = apiUrl + url,
+		waitTime = 0;
 
-function tryInitTeam(team) {
-	if (!teams[team]) {
-		teams[team] = {
-			won: 0,
-			lost: 0
-		};
+	if (api._lastMade) {
+		waitTime = (api._lastMade + apiGraceMs) -
+			(new Date()).getTime();
 	}
-}
 
-var eventExpectedCount = 0;
-
-var eventProcessor = function(error, response, body) {
-	var winner, loser;
-
-	if (body.away_totals.points > body.home_totals.points) {
-		winner = body.away_team.team_id;
-		loser = body.home_team.team_id;
+	if (waitTime > 0) {
+		setTimeout(function() {
+			api(url, success, error);
+		}, waitTime);
 	} else {
-		winner = body.home_team.team_id;
-		loser = body.away_team.team_id;
-	}
+		api._lastMade = (new Date()).getTime();
 
-	tryInitTeam(winner);
-	tryInitTeam(loser);
-
-	teams[winner].won++;
-	teams[loser].lost++;
-
-	eventExpectedCount--;
-
-	if (eventExpectedCount === 0) {
-		console.log(teams);
-	}
-};
-
-var dataProcessor = function(error, response, body) {
-	var events = body.event;
-
-	if (events && events.length) {
-		events.forEach(function(event) {
-			if (event.event_status === 'completed') {
-				var id = event.event_id;
-				var request_url = api_url + '/nba/boxscore/' + id + '.json';
-
-				eventExpectedCount++;
-
-				request({
-					url: request_url,
-					json: true,
-					headers: headers
-				},
-				eventProcessor);
+		request({
+			url: requestUrl,
+			json: true,
+			headers: headers
+		}, function(err, resp, data) {
+			if (err) {
+				console.log(err);
+			} else if (success) {
+				success(data);
 			}
 		});
 	}
-};
+}
 
-while (date.getTime() <= today.getTime()) {
+function isTeamWon(event) {
+	return event.team_event_result === 'win';
+}
+
+function isTeamLost(event) {
+	return event.team_event_result === 'loss';
+}
+
+function toDateString(date) {
 	var month = date.getMonth() + 1,
 		d = date.getDate(),
-		date_string = date.getFullYear().toString() +
+		dateString = date.getFullYear().toString() +
 						(month < 10 ? ('0' + month) : month) +
 						(d < 10 ? ('0' + d) : d);
-		request_url = api_url + '/events.json?sport=nba&date=' + date_string;
-
-
-	request({
-		url: request_url,
-		json: true,
-		headers: headers
-	}, dataProcessor);
-
-	date = new Date(date.getTime() + oneDayMs);
+	return dateString;
 }
+
+function getResults(success) {
+	var results = {}, counter = teams.length;
+
+	teams.forEach(function(team) {
+		getResultsForTeam(team, function(result) {
+			console.log(team.team_id, result);
+
+			results[team.team_id] = result;
+			counter--;
+
+			if (counter === 0) {
+				success(results);
+			}
+		});
+	});
+}
+
+function getResultsForTeam(team, success, error) {
+	var id = team.team_id, won, lose;
+
+	api('/nba/results/' + id + '.json?season=2014&since=' + toDateString(monday) + '&until=' + toDateString(today),
+		function(results) {
+		won = results.filter(isTeamWon).length;
+		lost = results.filter(isTeamLost).length;
+		success({
+			won: won,
+			lost: lost
+		});
+	}, function() {
+		console.log(arguments);
+	});
+}
+
+getResults(console.log);
